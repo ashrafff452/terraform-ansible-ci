@@ -19,9 +19,15 @@ pipeline {
         stage('Terraform Init') {
             steps {
                 dir("${TF_DIR}") {
-                    sh '''
-                        terraform init
-                    '''
+                    withCredentials([
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                         credentialsId: 'aws_id']
+                    ]) {
+                        sh '''
+                            aws sts get-caller-identity
+                            terraform init
+                        '''
+                    }
                 }
             }
         }
@@ -36,60 +42,90 @@ pipeline {
             }
         }
 
-    stage('Terraform Plan') {
-    steps {
-        withCredentials([
-            [$class: 'AmazonWebServicesCredentialsBinding',
-             credentialsId: 'aws_id']
-        ]) {
-            sh '''
-                aws sts get-caller-identity
-
-                cd terraform
-                terraform init
-                terraform plan
-            '''
+        stage('Terraform Plan') {
+            steps {
+                dir("${TF_DIR}") {
+                    withCredentials([
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                         credentialsId: 'aws_id']
+                    ]) {
+                        sh '''
+                            aws sts get-caller-identity
+                            terraform plan
+                        '''
+                    }
+                }
+            }
         }
-    }
-}
+
         stage('Terraform Apply') {
-    steps {
-        withCredentials([
-            [$class: 'AmazonWebServicesCredentialsBinding',
-             credentialsId: 'aws_id']
-        ]) {
-            sh '''
-                aws sts get-caller-identity
-
-                cd terraform
-                terraform init
-                terraform apply -auto-approve
-            '''
+            steps {
+                dir("${TF_DIR}") {
+                    withCredentials([
+                        [$class: 'AmazonWebServicesCredentialsBinding',
+                         credentialsId: 'aws_id']
+                    ]) {
+                        sh '''
+                            aws sts get-caller-identity
+                            terraform apply -auto-approve
+                        '''
+                    }
+                }
+            }
         }
-    }
-}
+
         stage('Generate Ansible Inventory') {
             steps {
+                script {
 
-                dir("${TF_DIR}") {
+                    def amazonIP = sh(
+                        script: "terraform -chdir=${TF_DIR} output -raw amazon_linux_private_ip",
+                        returnStdout: true
+                    ).trim()
 
-                    script {
+                    def ubuntuIP = sh(
+                        script: "terraform -chdir=${TF_DIR} output -raw ubuntu_private_ip",
+                        returnStdout: true
+                    ).trim()
 
-                       sh '''
-                AMAZON_IP=$(terraform -chdir=../terraform output -raw amazon_linux_private_ip)
-                UBUNTU_IP=$(terraform -chdir=../terraform output -raw ubuntu_private_ip)
-                          '''
-                        writeFile(
-                            file: "../ansible/inventory",
-                            text: """
-[amazon]
-c8.local ansible_host=${AMAZON_IP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/lib/jenkins/.ssh/linux_test.pem
+                    echo "Amazon Linux Private IP: ${amazonIP}"
+                    echo "Ubuntu Private IP: ${ubuntuIP}"
 
-[ubuntu]
-u21.local ansible_host=${UBUNTU_IP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/lib/jenkins/.ssh/linux_test.pem
+                    writeFile(
+                        file: "${ANSIBLE_DIR}/inventory.yml",
+                        text: """all:
+  children:
+    amazon:
+      hosts:
+        c8.local:
+          ansible_host: ${amazonIP}
+          ansible_user: ec2-user
+          ansible_ssh_private_key_file: /var/lib/jenkins/.ssh/linux_test.pem
+
+    ubuntu:
+      hosts:
+        u21.local:
+          ansible_host: ${ubuntuIP}
+          ansible_user: ubuntu
+          ansible_ssh_private_key_file: /var/lib/jenkins/.ssh/linux_test.pem
 """
-                        )
-                    }
+                    )
+
+                    echo "===== Generated Ansible Inventory ====="
+
+                    sh """
+                        cat ${ANSIBLE_DIR}/inventory.yml
+                    """
+                }
+            }
+        }
+
+        stage('Ansible Inventory Test') {
+            steps {
+                dir("${ANSIBLE_DIR}") {
+                    sh '''
+                        ansible-inventory -i inventory.yml --graph
+                    '''
                 }
             }
         }
@@ -98,7 +134,7 @@ u21.local ansible_host=${UBUNTU_IP} ansible_user=ubuntu ansible_ssh_private_key_
             steps {
                 dir("${ANSIBLE_DIR}") {
                     sh '''
-                        ansible all -m ping
+                        ansible all -i inventory.yml -m ping
                     '''
                 }
             }
@@ -108,7 +144,7 @@ u21.local ansible_host=${UBUNTU_IP} ansible_user=ubuntu ansible_ssh_private_key_
             steps {
                 dir("${ANSIBLE_DIR}") {
                     sh '''
-                        ansible-playbook site.yml
+                        ansible-playbook -i inventory.yml site.yml
                     '''
                 }
             }
@@ -118,8 +154,11 @@ u21.local ansible_host=${UBUNTU_IP} ansible_user=ubuntu ansible_ssh_private_key_
             steps {
                 dir("${ANSIBLE_DIR}") {
                     sh '''
-                        ansible all -a "hostname"
-                        ansible all -a "systemctl is-active httpd || systemctl is-active apache2"
+                        echo "===== HOSTNAMES ====="
+                        ansible all -i inventory.yml -a "hostname"
+
+                        echo "===== APACHE STATUS ====="
+                        ansible all -i inventory.yml -a "systemctl is-active httpd || systemctl is-active apache2"
                     '''
                 }
             }
