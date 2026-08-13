@@ -53,17 +53,21 @@ pipeline {
     }
 }
         stage('Terraform Apply') {
-            steps {
-                input message: 'Do you want to create the EC2 instances?'
+    steps {
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+             credentialsId: 'aws_id']
+        ]) {
+            sh '''
+                aws sts get-caller-identity
 
-                dir("${TF_DIR}") {
-                    sh '''
-                        terraform apply -auto-approve
-                    '''
-                }
-            }
+                cd terraform
+                terraform init
+                terraform apply -auto-approve
+            '''
         }
-
+    }
+}
         stage('Generate Ansible Inventory') {
             steps {
 
