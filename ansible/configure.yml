@@ -1,0 +1,41 @@
+---
+- name: Configure Amazon Linux
+  hosts: amazon_linux
+  become: true
+  gather_facts: true
+
+  tasks:
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: c8.local
+
+    - name: Install required packages
+      ansible.builtin.package:
+        name:
+          - git
+          - curl
+        state: present
+
+
+- name: Configure Ubuntu
+  hosts: ubuntu
+  become: true
+  gather_facts: true
+
+  tasks:
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: u26.local
+
+    - name: Update apt cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    - name: Install required packages
+      ansible.builtin.apt:
+        name:
+          - git
+          - curl
+        state: present
