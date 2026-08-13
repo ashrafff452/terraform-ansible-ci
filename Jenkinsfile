@@ -114,7 +114,7 @@ u21.local ansible_host=${ubuntuIP} ansible_user=ubuntu ansible_ssh_private_key_f
             steps {
                 dir("${ANSIBLE_DIR}") {
                     sh '''
-                        ansible-playbook playbooks/site.yml
+                        ansible-playbook site.yml
                     '''
                 }
             }
