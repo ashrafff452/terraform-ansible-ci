@@ -1,0 +1,10 @@
+AMAZON_IP=$(terraform output -raw amazon_linux_public_ip)
+UBUNTU_IP=$(terraform output -raw ubuntu_public_ip)
+
+cat > inventory <<EOF
+[amazon]
+c8 ansible_host=$AMAZON_IP ansible_user=ec2-user
+
+[ubuntu]
+u21 ansible_host=$UBUNTU_IP ansible_user=ubuntu
+EOF

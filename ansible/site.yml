@@ -1,0 +1,60 @@
+---
+- name: Configure Amazon Linux
+  hosts: amazon
+  become: true
+  gather_facts: true
+
+  tasks:
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: c8.local
+
+    - name: Install Apache
+      ansible.builtin.yum:
+        name: httpd
+        state: present
+
+    - name: Start Apache
+      ansible.builtin.service:
+        name: httpd
+        state: started
+        enabled: true
+
+    - name: Create test page
+      ansible.builtin.copy:
+        content: |
+          <h1>Amazon Linux - c8.local</h1>
+          <p>Configured using Ansible</p>
+        dest: /var/www/html/index.html
+
+
+- name: Configure Ubuntu
+  hosts: ubuntu
+  become: true
+  gather_facts: true
+
+  tasks:
+
+    - name: Set hostname
+      ansible.builtin.hostname:
+        name: u26.local
+
+    - name: Install Apache
+      ansible.builtin.apt:
+        name: apache2
+        state: present
+        update_cache: true
+
+    - name: Start Apache
+      ansible.builtin.service:
+        name: apache2
+        state: started
+        enabled: true
+
+    - name: Create test page
+      ansible.builtin.copy:
+        content: |
+          <h1>Ubuntu - u26.local</h1>
+          <p>Configured using Ansible</p>
+        dest: /var/www/html/index.html
