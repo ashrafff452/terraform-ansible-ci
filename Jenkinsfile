@@ -75,15 +75,9 @@ pipeline {
 
                     script {
 
-                        def amazonIP = sh(
-                            script: "terraform output -raw amazon_linux_public_ip",
-                            returnStdout: true
-                        ).trim()
-
-                        def ubuntuIP = sh(
-                            script: "terraform output -raw ubuntu_public_ip",
-                            returnStdout: true
-                        ).trim()
+                       sh '''
+                AMAZON_IP=$(terraform -chdir=../terraform output -raw amazon_linux_private_ip)
+                UBUNTU_IP=$(terraform -chdir=../terraform output -raw ubuntu_private_ip)
 
                         writeFile(
                             file: "../ansible/inventory",
