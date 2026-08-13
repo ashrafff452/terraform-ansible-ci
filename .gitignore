@@ -1,0 +1,21 @@
+# Terraform
+.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+
+# Sensitive Terraform variables
+terraform/terraform.tfvars
+
+# SSH private keys
+*.pem
+*.key
+
+# Ansible generated inventory
+ansible/inventory
+
+# Ansible retry files
+*.retry
+
+# Logs
+*.log
