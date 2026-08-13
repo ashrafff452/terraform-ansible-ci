@@ -78,7 +78,7 @@ pipeline {
                        sh '''
                 AMAZON_IP=$(terraform -chdir=../terraform output -raw amazon_linux_private_ip)
                 UBUNTU_IP=$(terraform -chdir=../terraform output -raw ubuntu_private_ip)
-
+                          '''
                         writeFile(
                             file: "../ansible/inventory",
                             text: """
