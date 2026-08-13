@@ -5,7 +5,7 @@ pipeline {
     environment {
         AWS_DEFAULT_REGION = 'us-east-1'
         TF_DIR = 'terraform'
-        ANSIBLE_DIR = '/etc/ansible'
+        ANSIBLE_DIR = 'ansible'
     }
 
     stages {
