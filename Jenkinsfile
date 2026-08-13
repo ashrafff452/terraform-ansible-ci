@@ -89,10 +89,10 @@ pipeline {
                             file: "../ansible/inventory",
                             text: """
 [amazon]
-c8.local ansible_host=${amazonIP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/lib/jenkins/.ssh/linux_testing.pem
+c8.local ansible_host=${amazonIP} ansible_user=ec2-user ansible_ssh_private_key_file=/var/lib/jenkins/.ssh/linux_test.pem
 
 [ubuntu]
-u21.local ansible_host=${ubuntuIP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/lib/jenkins/.ssh/linux_testing.pem
+u21.local ansible_host=${ubuntuIP} ansible_user=ubuntu ansible_ssh_private_key_file=/var/lib/jenkins/.ssh/linux_test.pem
 """
                         )
                     }
