@@ -36,16 +36,22 @@ pipeline {
             }
         }
 
-        stage('Terraform Plan') {
-            steps {
-                dir("${TF_DIR}") {
-                    sh '''
-                        terraform plan
-                    '''
-                }
-            }
-        }
+    stage('Terraform Plan') {
+    steps {
+        withCredentials([
+            [$class: 'AmazonWebServicesCredentialsBinding',
+             credentialsId: 'aws_id']
+        ]) {
+            sh '''
+                aws sts get-caller-identity
 
+                cd terraform
+                terraform init
+                terraform plan
+            '''
+        }
+    }
+}
         stage('Terraform Apply') {
             steps {
                 input message: 'Do you want to create the EC2 instances?'
