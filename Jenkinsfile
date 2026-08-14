@@ -75,26 +75,26 @@ pipeline {
         }
 
         stage('Generate Ansible Inventory') {
-            steps {
+    steps {
+        script {
 
-                script {
+            def amazonIP = sh(
+                script: "terraform -chdir=${TF_DIR} output -raw amazon_linux_private_ip",
+                returnStdout: true
+            ).trim()
 
-                    def amazonIP = sh(
-                        script: "terraform -chdir=${TF_DIR} output -raw amazon_linux_private_ip",
-                        returnStdout: true
-                    ).trim()
+            def ubuntuIP = sh(
+                script: "terraform -chdir=${TF_DIR} output -raw ubuntu_private_ip",
+                returnStdout: true
+            ).trim()
 
-                    def ubuntuIP = sh(
-                        script: "terraform -chdir=${TF_DIR} output -raw ubuntu_private_ip",
-                        returnStdout: true
-                    ).trim()
+            echo "Amazon Linux Private IP: ${amazonIP}"
+            echo "Ubuntu Private IP: ${ubuntuIP}"
 
-                    echo "Amazon Linux Private IP: ${amazonIP}"
-                    echo "Ubuntu Private IP: ${ubuntuIP}"
-
-                    writeFile(
-                        file: "${ANSIBLE_DIR}/inventory.yml",
-                        text: """all:
+            writeFile(
+                file: "${ANSIBLE_DIR}/inventory.yml",
+                text: """\
+all:
   children:
     frontend:
       hosts:
@@ -109,17 +109,20 @@ pipeline {
           ansible_host: ${ubuntuIP}
           ansible_user: ubuntu
           ansible_ssh_private_key_file: /var/lib/jenkins/.ssh/linux_test.pem
+
+  vars:
+    ansible_ssh_common_args: "-o StrictHostKeyChecking=no -o UserKnownHostsFile=/dev/null"
 """
-                    )
+            )
 
-                    echo "===== Generated Ansible Inventory ====="
+            echo "===== GENERATED INVENTORY ====="
 
-                    sh """
-                        cat ${ANSIBLE_DIR}/inventory.yml
-                    """
-                }
-            }
+            sh """
+                cat ${ANSIBLE_DIR}/inventory.yml
+            """
         }
+    }
+}
 
         stage('Ansible Inventory Test') {
             steps {
