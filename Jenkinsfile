@@ -155,25 +155,55 @@ all:
         }
 
         stage('Verification') {
-            steps {
-                dir("${ANSIBLE_DIR}") {
-                    sh '''
-                        echo "===== HOSTNAMES ====="
+    steps {
+        dir("${ANSIBLE_DIR}") {
+            sh '''
+                echo "======================================"
+                echo "HOSTNAMES"
+                echo "======================================"
 
-                        ansible all -i inventory.yml -a "hostname"
+                ansible all -i inventory.yml -a "hostname"
 
-                        echo "===== APACHE STATUS ====="
+                echo "======================================"
+                echo "SELINUX"
+                echo "======================================"
 
-                        echo "--- Amazon Linux ---"
-                        ansible frontend -i inventory.yml -a "systemctl is-active httpd"
+                ansible frontend -i inventory.yml -a "getenforce"
 
-                        echo "--- Ubuntu ---"
-                        ansible backend -i inventory.yml -a "systemctl is-active apache2"
-                    '''
-                }
-            }
+                echo "======================================"
+                echo "FIREWALLD"
+                echo "======================================"
+
+                ansible frontend -i inventory.yml -a "systemctl is-active firewalld"
+
+                echo "======================================"
+                echo "NGINX"
+                echo "======================================"
+
+                ansible frontend -i inventory.yml -a "systemctl is-active nginx"
+
+                echo "======================================"
+                echo "NETDATA"
+                echo "======================================"
+
+                ansible backend -i inventory.yml -a "systemctl is-active netdata"
+
+                echo "======================================"
+                echo "NETDATA PORT"
+                echo "======================================"
+
+                ansible backend -i inventory.yml -a "ss -lntp | grep 19999"
+
+                echo "======================================"
+                echo "NGINX -> NETDATA"
+                echo "======================================"
+
+                ansible frontend -i inventory.yml -a "curl -I --max-time 10 http://localhost"
+
+            '''
         }
     }
+}
 
     post {
 
