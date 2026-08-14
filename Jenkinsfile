@@ -76,6 +76,7 @@ pipeline {
 
         stage('Generate Ansible Inventory') {
             steps {
+
                 script {
 
                     def amazonIP = sh(
@@ -95,16 +96,16 @@ pipeline {
                         file: "${ANSIBLE_DIR}/inventory.yml",
                         text: """all:
   children:
-    amazon:
+    frontend:
       hosts:
         c8.local:
           ansible_host: ${amazonIP}
           ansible_user: ec2-user
           ansible_ssh_private_key_file: /var/lib/jenkins/.ssh/linux_test.pem
 
-    ubuntu:
+    backend:
       hosts:
-        u21.local:
+        u26.local:
           ansible_host: ${ubuntuIP}
           ansible_user: ubuntu
           ansible_ssh_private_key_file: /var/lib/jenkins/.ssh/linux_test.pem
@@ -155,10 +156,13 @@ pipeline {
                 dir("${ANSIBLE_DIR}") {
                     sh '''
                         echo "===== HOSTNAMES ====="
+
                         ansible all -i inventory.yml -a "hostname"
 
                         echo "===== APACHE STATUS ====="
-                        ansible all -i inventory.yml -a "systemctl is-active httpd || systemctl is-active apache2"
+
+                        ansible all -i inventory.yml -a \
+                        "systemctl is-active httpd || systemctl is-active apache2"
                     '''
                 }
             }
