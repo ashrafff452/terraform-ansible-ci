@@ -2,30 +2,68 @@
 - name: Configure Amazon Linux
   hosts: frontend
   become: true
+  gather_facts: true
 
   tasks:
 
     - name: Set hostname
-      ansible.builtin.hostname:
+      hostname:
         name: c8.local
 
-    - name: Install Apache
-      ansible.builtin.dnf:
+    - name: Install Apache on Amazon Linux
+      dnf:
         name: httpd
         state: present
 
     - name: Start and enable Apache
-      ansible.builtin.service:
+      systemd:
         name: httpd
         state: started
         enabled: true
 
     - name: Create test page
-      ansible.builtin.copy:
+      copy:
         content: |
           <html>
           <body>
-          <h1>Hello from Amazon Linux - c8.local</h1>
+          <h1>Amazon Linux - c8.local</h1>
+          <p>Configured using Terraform + Jenkins + Ansible</p>
+          </body>
+          </html>
+        dest: /var/www/html/index.html
+        mode: '0644'
+
+
+- name: Configure Ubuntu
+  hosts: backend
+  become: true
+  gather_facts: true
+
+  tasks:
+
+    - name: Set hostname
+      hostname:
+        name: u26.local
+
+    - name: Install Apache on Ubuntu
+      apt:
+        name: apache2
+        state: present
+        update_cache: true
+
+    - name: Start and enable Apache
+      systemd:
+        name: apache2
+        state: started
+        enabled: true
+
+    - name: Create test page
+      copy:
+        content: |
+          <html>
+          <body>
+          <h1>Ubuntu - u26.local</h1>
+          <p>Configured using Terraform + Jenkins + Ansible</p>
           </body>
           </html>
         dest: /var/www/html/index.html
