@@ -41,7 +41,7 @@ pipeline {
 
                     withCredentials([
                         [$class: 'AmazonWebServicesCredentialsBinding',
-                         credentialsId: "${aws_id}"]
+                         credentialsId: "${AWS_CREDENTIALS}"]
                     ]) {
 
                         sh '''
@@ -103,7 +103,7 @@ pipeline {
 
                     withCredentials([
                         [$class: 'AmazonWebServicesCredentialsBinding',
-                         credentialsId: "${aws_id}"]
+                         credentialsId: "${AWS_CREDENTIALS}"]
                     ]) {
 
                         sh '''
@@ -140,7 +140,7 @@ pipeline {
 
                     withCredentials([
                         [$class: 'AmazonWebServicesCredentialsBinding',
-                         credentialsId: "${aws_id}"]
+                         credentialsId: "${AWS_CREDENTIALS}"]
                     ]) {
 
                         sh '''
