@@ -151,23 +151,24 @@ pipeline {
             }
         }
 
-        stage('Verification') {
-            steps {
-                dir("${ANSIBLE_DIR}") {
-                    sh '''
-                        echo "===== HOSTNAMES ====="
+    stage('Verification') {
+    steps {
+        dir("${ANSIBLE_DIR}") {
+            sh '''
+                echo "===== HOSTNAMES ====="
+                ansible all -i inventory.yml -a "hostname"
 
-                        ansible all -i inventory.yml -a "hostname"
+                echo "===== APACHE STATUS ====="
 
-                        echo "===== APACHE STATUS ====="
+                echo "--- Amazon Linux ---"
+                ansible frontend -i inventory.yml -a "systemctl is-active httpd"
 
-                        ansible all -i inventory.yml -a \
-                        "systemctl is-active httpd || systemctl is-active apache2"
-                    '''
-                }
-            }
+                echo "--- Ubuntu ---"
+                ansible backend -i inventory.yml -a "systemctl is-active apache2"
+            '''
         }
     }
+}
 
     post {
 
