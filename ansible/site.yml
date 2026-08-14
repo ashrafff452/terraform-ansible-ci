@@ -26,26 +26,25 @@
 - name: Configure frontend
   hosts: frontend
   become: true
-  gather_facts: true
 
   tasks:
 
     - name: Install Nginx
-      ansible.builtin.package:
+      package:
         name: nginx
         state: present
 
     - name: Create Nginx configuration
-      ansible.builtin.template:
+      template:
         src: nginx.conf.j2
-        dest: /etc/nginx/nginx.conf
+        dest: /etc/nginx/conf.d/netdata.conf
         owner: root
         group: root
         mode: '0644'
       notify: Restart Nginx
 
     - name: Enable and start Nginx
-      ansible.builtin.systemd:
+      service:
         name: nginx
         state: started
         enabled: true
@@ -53,10 +52,9 @@
   handlers:
 
     - name: Restart Nginx
-      ansible.builtin.systemd:
+      service:
         name: nginx
         state: restarted
-
 
 - name: Configure backend
   hosts: backend
